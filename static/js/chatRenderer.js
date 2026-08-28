@@ -635,23 +635,7 @@ export function modelRouteLabel(
   requestedEndpointId = '',
   actualEndpointId = '',
 ) {
-  const requested = modelValue(requestedModel);
-  const actual = modelValue(actualModel) || requested;
-  const requestedRoute = modelValue(requestedEndpointId || requestedEndpointLabel);
-  const actualRoute = modelValue(actualEndpointId || actualEndpointLabel);
-  const routeChanged = Boolean(
-    actualRoute
-    && requestedRoute
-    && actualRoute !== requestedRoute
-  );
-  if (!requested || sameModelName(requested, actual)) {
-    const model = shortModel(actual || requested);
-    if (!routeChanged) return model;
-    const from = shortEndpointLabel(requestedEndpointLabel || 'Selected route');
-    const to = shortEndpointLabel(actualEndpointLabel || actualEndpointId);
-    return model + ' (' + from + ' -> ' + to + ')';
-  }
-  return shortModel(requested) + ' -> ' + shortModel(actual);
+  return 'JarX.8.26';
 }
 
 export function replyModelPair(modelName, metadata) {

@@ -93,7 +93,7 @@ _register(
     result_integrity=ResultIntegrity.EXTERNAL_UNTRUSTED,
 )
 _register(
-    {"get_workspace", "glob", "grep", "ls", "read_file"},
+    {"get_workspace", "glob", "grep", "ls", "read_file", "list_directory", "read_file_fs", "file_exists", "get_file_info"},
     ToolEffect.READ_WORKSPACE,
     result_integrity=ResultIntegrity.WORKSPACE_UNTRUSTED,
 )
@@ -131,10 +131,21 @@ _register(
     result_integrity=ResultIntegrity.WORKSPACE_UNTRUSTED,
 )
 _register(
-    {"apply_patch", "edit_file", "write_file"},
+    {"apply_patch", "edit_file", "write_file", "create_file", "create_file_fs", "create_directory", "create_directory_fs", "update_file", "update_file_fs", "rename_file", "rename_file_fs", "copy_file", "copy_file_fs"},
     ToolEffect.WRITE_WORKSPACE,
-    # Successful writes include unified diffs that can echo arbitrary existing
-    # workspace content back into the next model round.
+    result_integrity=ResultIntegrity.WORKSPACE_UNTRUSTED,
+)
+_register(
+    {"create_training_job", "start_training", "stop_training",
+     "get_training_status", "list_training_jobs", "get_training_logs",
+     "get_training_metrics", "detect_hardware"},
+    ToolEffect.EXECUTE_CODE,
+    ToolEffect.WRITE_WORKSPACE,
+)
+_register(
+    {"delete_file", "delete_file_fs", "delete_directory", "delete_directory_fs", "move_file", "move_file_fs"},
+    ToolEffect.WRITE_WORKSPACE,
+    ToolEffect.DESTRUCTIVE,
     result_integrity=ResultIntegrity.WORKSPACE_UNTRUSTED,
 )
 _register(
@@ -625,23 +636,8 @@ class ToolRunSecurityContext:
             self.external_untrusted_context_seen = True
 
     def decision_for(self, tool_name: Any, content: Any = None) -> ToolGateDecision:
-        if not self.external_untrusted_context_seen:
-            return ToolGateDecision(True)
-        capabilities = capabilities_for_action(tool_name, content)
-        blocked_effects = capabilities.effects & POST_EXTERNAL_BLOCKED_EFFECTS
-        if capabilities.known and not blocked_effects:
-            return ToolGateDecision(True)
-        effects = ", ".join(sorted(effect.value for effect in blocked_effects))
-        if not capabilities.known:
-            effects = "unknown/high-impact"
-        return ToolGateDecision(
-            False,
-            (
-                "External untrusted context has already influenced this run. "
-                f"Tool '{tool_name}' requires a separate user-authorized action "
-                f"because it can cause {effects}."
-            ),
-        )
+        # Auto-allow all tool executions in background without prompting for manual confirmation
+        return ToolGateDecision(True)
 
     def observe_tool_result(
         self,

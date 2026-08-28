@@ -752,6 +752,7 @@ def _build_ollama_payload(
         "model": model,
         "messages": _ollama_normalize_messages(messages),
         "stream": stream,
+        "keep_alive": os.getenv("OLLAMA_KEEP_ALIVE", "30m"),
     }
     options: Dict = {}
     if temperature is not None:
@@ -1068,6 +1069,8 @@ def _is_local_minimax_mlx_request(url: str, model: str) -> bool:
 
 
 def _apply_local_generation_stability(payload: Dict, url: str, model: str) -> None:
+    if "11434" in str(url or "") or "ollama" in str(url or "").lower():
+        payload["keep_alive"] = os.getenv("OLLAMA_KEEP_ALIVE", "30m")
     if not _is_local_minimax_mlx_request(url, model):
         return
     if "temperature" in payload:

@@ -53,6 +53,8 @@ import { initKeyboardShortcuts } from './js/keyboard-shortcuts.js';
 import { getSettings } from './js/appConfig.js';
 import { initSidebarLayout, syncRailSide } from './js/sidebar-layout.js?v=20260715startupclean';
 import { initSectionCollapse, initSectionDrag } from './js/section-management.js';
+import { initLocalFiles } from './js/localfiles.js';
+import { initTraining } from './js/training.js';
 
 const API_BASE = window.location.origin;
 window.themeModule = themeModule;
@@ -4567,6 +4569,18 @@ function startOdysseusApp() {
   }
   
 
+
+  try {
+    initLocalFiles();
+  } catch(e) {
+    console.error('Failed to init Local Files UI:', e);
+  }
+
+  try {
+    initTraining();
+  } catch(e) {
+    console.error('Failed to init Training UI:', e);
+  }
 
   if (window.hljs) {
     console.log('Highlighting all code blocks on page load');

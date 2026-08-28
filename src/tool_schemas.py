@@ -35,6 +35,187 @@ FUNCTION_TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
+            "name": "list_directory",
+            "description": "List files and subdirectories in a Windows folder. Shows file names, directory flags, sizes, and last modified timestamps. Confined to allowed roots.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Path to directory (optional; defaults to workspace/Downloads)"}
+                },
+                "required": []
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file_fs",
+            "description": "Read text content from a file safely. Supports line-range pagination for large files. Automatically detects binary files.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Absolute or relative file path to read"},
+                    "start_line": {"type": "integer", "description": "Starting line number (1-based, optional)"},
+                    "end_line": {"type": "integer", "description": "Ending line number (inclusive, optional)"}
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_file",
+            "description": "Create a new text file with content on the Windows filesystem. Creates parent directories automatically.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "File path to create"},
+                    "content": {"type": "string", "description": "Text content to write into the file"},
+                    "overwrite": {"type": "boolean", "description": "Whether to overwrite if file already exists (default: false)"}
+                },
+                "required": ["path", "content"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_directory",
+            "description": "Create a new directory (folder) on the Windows filesystem.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Path of the folder to create"}
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_file",
+            "description": "Update an existing file by overwriting it with new content or appending content to it.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "File path to update"},
+                    "content": {"type": "string", "description": "Content to write or append"},
+                    "mode": {"type": "string", "enum": ["overwrite", "append"], "description": "Write mode (default: overwrite)"}
+                },
+                "required": ["path", "content"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_file",
+            "description": "Permanently delete a file from the Windows filesystem. Requires user confirmation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Path of file to delete"},
+                    "confirmed": {"type": "boolean", "description": "Set to true only after user has confirmed deletion"}
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_directory",
+            "description": "Delete a folder from the Windows filesystem. Set recursive=true to delete non-empty folders. Requires user confirmation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Path of directory to delete"},
+                    "recursive": {"type": "boolean", "description": "Whether to delete all contents recursively"},
+                    "confirmed": {"type": "boolean", "description": "Set to true only after user has confirmed deletion"}
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "rename_file",
+            "description": "Rename a file or folder in the same directory.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "src": {"type": "string", "description": "Current path of file or folder"},
+                    "new_name": {"type": "string", "description": "New name (just the name, not a path)"}
+                },
+                "required": ["src", "new_name"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "move_file",
+            "description": "Move a file or folder to a new destination path. Requires confirmation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "src": {"type": "string", "description": "Source path"},
+                    "dest": {"type": "string", "description": "Destination directory or file path"},
+                    "confirmed": {"type": "boolean", "description": "Set to true after confirmation"}
+                },
+                "required": ["src", "dest"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "copy_file",
+            "description": "Copy a file or folder to a destination path.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "src": {"type": "string", "description": "Source path"},
+                    "dest": {"type": "string", "description": "Destination path"}
+                },
+                "required": ["src", "dest"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "file_exists",
+            "description": "Check if a file or directory exists at the given path.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Path to check"}
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_file_info",
+            "description": "Get detailed metadata about a file or folder (size, type, creation and modification timestamps).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Path to inspect"}
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "bash",
             "description": "Run a shell command (full access). Prefer a dedicated tool whenever one fits the job (reading, writing, editing, searching, or listing files); use bash only for what no dedicated tool covers (installs, git, builds, running programs, system info). Do NOT create or edit files via bash redirects/heredocs/sed -- use the dedicated file tools.",
             "parameters": {
@@ -1290,6 +1471,125 @@ FUNCTION_TOOL_SCHEMAS = [
                     "job_id": {"type": "string", "description": "Background job id (required for output/kill; from action='list')"},
                 },
                 "required": ["action"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_training_job",
+            "description": "Create a new AI model training job. Supports local (offline) and remote (sleep mode) training.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Name for the training job"},
+                    "mode": {"type": "string", "enum": ["local", "remote"], "description": "Training mode: local (offline) or remote (sleep mode)"},
+                    "model_path": {"type": "string", "description": "Path to the model or model name"},
+                    "dataset_path": {"type": "string", "description": "Path to the training dataset"},
+                    "epochs": {"type": "integer", "description": "Number of training epochs"},
+                    "batch_size": {"type": "integer", "description": "Training batch size"},
+                    "learning_rate": {"type": "number", "description": "Learning rate"},
+                    "mixed_precision": {"type": "boolean", "description": "Enable mixed precision training"},
+                    "checkpoint_interval": {"type": "integer", "description": "Save checkpoint every N epochs"}
+                },
+                "required": ["name", "mode", "model_path", "dataset_path", "epochs"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "start_training",
+            "description": "Start a created training job.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "job_id": {"type": "string", "description": "Training job ID to start"}
+                },
+                "required": ["job_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "stop_training",
+            "description": "Stop a running training job. Saves current checkpoint before stopping.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "job_id": {"type": "string", "description": "Training job ID to stop"}
+                },
+                "required": ["job_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_training_status",
+            "description": "Get the current status and progress of a training job including epoch, loss, GPU usage.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "job_id": {"type": "string", "description": "Training job ID"}
+                },
+                "required": ["job_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_training_jobs",
+            "description": "List all training jobs with their current status.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "status": {"type": "string", "description": "Filter by status (optional)"}
+                },
+                "required": []
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_training_logs",
+            "description": "Get the training log output for a job.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "job_id": {"type": "string", "description": "Training job ID"},
+                    "tail": {"type": "integer", "description": "Number of recent log lines to return (default: 50)"}
+                },
+                "required": ["job_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_training_metrics",
+            "description": "Get training metrics (loss, accuracy, etc.) for a job.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "job_id": {"type": "string", "description": "Training job ID"}
+                },
+                "required": ["job_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "detect_hardware",
+            "description": "Detect local hardware capabilities for training: CPU, RAM, GPU, VRAM, CUDA availability.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": []
             }
         }
     },

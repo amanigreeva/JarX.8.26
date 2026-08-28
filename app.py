@@ -739,6 +739,10 @@ app.include_router(setup_personal_routes(personal_docs_mgr, rag_manager, rag_ava
 from routes.embedding_routes import setup_embedding_routes
 app.include_router(setup_embedding_routes())
 
+# JarX Local FileSystem routes
+from routes.jarvis_fs_routes import router as jarvis_fs_router
+app.include_router(jarvis_fs_router)
+
 # Models
 from routes.model_routes import setup_model_routes
 app.include_router(setup_model_routes(model_discovery))
@@ -885,6 +889,10 @@ app.include_router(setup_contacts_routes())
 
 from companion import setup_companion_routes
 app.include_router(setup_companion_routes())
+
+# AI Training Manager routes
+from routes.training_routes import setup_training_routes
+app.include_router(setup_training_routes())
 
 # ========= ROUTES (kept in app.py) =========
 

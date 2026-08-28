@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import pathlib
+from pathlib import Path
 import re
 import sys
 import time
@@ -136,7 +137,23 @@ def _tool_path_roots() -> list[str]:
     except OSError:
         pass
 
-    # $TMPDIR — per-user temp root on macOS (e.g. /var/folders/.../T/).
+    # Add Windows User common directories (Downloads, Desktop, Documents, and JARX_WORKSPACE)
+    try:
+        user_home = Path.home()
+        roots.append(str((user_home / "Downloads").resolve()))
+        roots.append(str((user_home / "Desktop").resolve()))
+        roots.append(str((user_home / "Documents").resolve()))
+        env_ws = os.getenv("JARX_WORKSPACE")
+        if env_ws:
+            roots.append(str(Path(env_ws).expanduser().resolve()))
+        env_extra = os.getenv("JARX_EXTRA_ALLOWED_PATHS", "")
+        if env_extra:
+            for p in env_extra.split(","):
+                if p.strip():
+                    roots.append(str(Path(p.strip()).expanduser().resolve()))
+    except Exception:
+        pass
+
     tmpdir = os.environ.get("TMPDIR")
     if tmpdir:
         roots.append(tmpdir)

@@ -34,6 +34,18 @@ from .admin_tools import (
     do_manage_tokens, do_manage_settings,
 )
 
+from .jarvis_fs_tools import (
+    ListDirectoryTool, ReadFileFsTool, CreateFileFsTool, CreateDirectoryFsTool,
+    UpdateFileFsTool, DeleteFileFsTool, DeleteDirectoryFsTool, RenameFileFsTool,
+    MoveFileFsTool, CopyFileFsTool, FileExistsFsTool, GetFileInfoFsTool
+)
+
+from .training_tools import (
+    CreateTrainingJobTool, StartTrainingTool, StopTrainingTool,
+    GetTrainingStatusTool, ListTrainingJobsTool, GetTrainingLogsTool,
+    GetTrainingMetricsTool, DetectHardwareTool
+)
+
 TOOL_HANDLERS = {
     "bash": BashTool().execute,
     "python": PythonTool().execute,
@@ -63,6 +75,36 @@ TOOL_HANDLERS = {
     "list_sessions": ListSessionsTool().execute,
     "send_to_session": SendToSessionTool().execute,
     "manage_session": ManageSessionTool().execute,
+    # JarX-8.26 Local File System CRUD tools
+    "list_directory": ListDirectoryTool().execute,
+    "read_file_fs": ReadFileFsTool().execute,
+    "create_file": CreateFileFsTool().execute,
+    "create_file_fs": CreateFileFsTool().execute,
+    "create_directory": CreateDirectoryFsTool().execute,
+    "create_directory_fs": CreateDirectoryFsTool().execute,
+    "update_file": UpdateFileFsTool().execute,
+    "update_file_fs": UpdateFileFsTool().execute,
+    "delete_file": DeleteFileFsTool().execute,
+    "delete_file_fs": DeleteFileFsTool().execute,
+    "delete_directory": DeleteDirectoryFsTool().execute,
+    "delete_directory_fs": DeleteDirectoryFsTool().execute,
+    "rename_file": RenameFileFsTool().execute,
+    "rename_file_fs": RenameFileFsTool().execute,
+    "move_file": MoveFileFsTool().execute,
+    "move_file_fs": MoveFileFsTool().execute,
+    "copy_file": CopyFileFsTool().execute,
+    "copy_file_fs": CopyFileFsTool().execute,
+    "file_exists": FileExistsFsTool().execute,
+    "get_file_info": GetFileInfoFsTool().execute,
+    # Training tools
+    "create_training_job": CreateTrainingJobTool().execute,
+    "start_training": StartTrainingTool().execute,
+    "stop_training": StopTrainingTool().execute,
+    "get_training_status": GetTrainingStatusTool().execute,
+    "list_training_jobs": ListTrainingJobsTool().execute,
+    "get_training_logs": GetTrainingLogsTool().execute,
+    "get_training_metrics": GetTrainingMetricsTool().execute,
+    "detect_hardware": DetectHardwareTool().execute,
 }
 # Config/integration admin tools (manage_endpoints/mcp/webhooks/tokens/settings).
 TOOL_HANDLERS.update(ADMIN_TOOL_HANDLERS)
@@ -79,6 +121,14 @@ PYTHON_TIMEOUT = 30
 TOOL_TAGS = {"bash", "python", "web_search", "web_fetch", "read_file", "write_file", "edit_file",
              "apply_patch", "todowrite",
              "grep", "glob", "ls", "get_workspace", "manage_bg_jobs",
+             "list_directory", "read_file_fs", "create_file", "create_file_fs",
+             "create_directory", "create_directory_fs", "update_file", "update_file_fs",
+             "delete_file", "delete_file_fs", "delete_directory", "delete_directory_fs",
+             "rename_file", "rename_file_fs", "move_file", "move_file_fs",
+             "copy_file", "copy_file_fs", "file_exists", "get_file_info",
+             "create_training_job", "start_training", "stop_training",
+             "get_training_status", "list_training_jobs", "get_training_logs",
+             "get_training_metrics", "detect_hardware",
              "create_document", "update_document", "edit_document",
              "search_chats",
              "chat_with_model", "create_session", "list_sessions",

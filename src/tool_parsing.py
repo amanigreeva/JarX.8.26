@@ -598,13 +598,15 @@ def _parse_raw_web_json_lookup(text: str) -> Optional[tuple[ToolBlock, tuple[int
 
 
 def _looks_like_openai_tool_call_blob(value) -> bool:
-    """Return True for raw OpenAI-style tool-call JSON leaked as text."""
+    """Return True for raw OpenAI-style or Ollama/Qwen-style tool-call JSON leaked as text."""
     if isinstance(value, list):
         return bool(value) and all(_looks_like_openai_tool_call_blob(item) for item in value)
     if not isinstance(value, dict):
         return False
     fn = value.get("function")
     if isinstance(fn, dict) and isinstance(fn.get("name"), str):
+        return True
+    if isinstance(value.get("name"), str) and ("arguments" in value or "parameters" in value):
         return True
     return False
 
@@ -619,13 +621,17 @@ def _raw_openai_tool_call_to_block(value) -> Optional[ToolBlock]:
     if not isinstance(value, dict):
         return None
     fn = value.get("function")
-    if not isinstance(fn, dict):
+    if isinstance(fn, dict):
+        name = str(fn.get("name") or "").strip()
+        raw_args = fn.get("arguments") or fn.get("parameters") or {}
+    elif isinstance(value.get("name"), str):
+        name = str(value.get("name") or "").strip()
+        raw_args = value.get("arguments") or value.get("parameters") or {}
+    else:
         return None
-    name = str(fn.get("name") or "").strip()
     if not name:
         return None
     tool_type = _TOOL_NAME_MAP.get(name, name)
-    raw_args = fn.get("arguments") or {}
     try:
         args = json.loads(raw_args) if isinstance(raw_args, str) else raw_args
     except (json.JSONDecodeError, TypeError):
@@ -744,7 +750,7 @@ def _raw_openai_tool_call_to_block(value) -> Optional[ToolBlock]:
 
 
 def _parse_raw_openai_tool_call_json(text: str) -> Optional[ToolBlock]:
-    if not isinstance(text, str) or '"function"' not in text:
+    if not isinstance(text, str) or ('"function"' not in text and '"arguments"' not in text and '"parameters"' not in text):
         return None
     decoder = json.JSONDecoder()
     for match in re.finditer(r"[\[{]", text):
@@ -759,41 +765,15 @@ def _parse_raw_openai_tool_call_json(text: str) -> Optional[ToolBlock]:
 
 
 def _strip_raw_openai_tool_call_json(text: str) -> str:
-    """Strip raw JSON tool calls such as {"function": {...}, "type": "function"}.
-
-    Some local models emit native tool-call JSON into assistant text. The agent
-    can still parse/execute it through the native path, but the raw payload must
-    not render or persist as prose.
+    """Strip raw JSON tool calls and tool schemas such as {"function": {...}, "type": "function"}.
     """
-    if not isinstance(text, str) or '"function"' not in text:
+    if not isinstance(text, str) or ('"function"' not in text and '"arguments"' not in text and '"parameters"' not in text and '"web_search"' not in text):
         return text
-    decoder = json.JSONDecoder()
-    pieces = []
-    pos = 0
-    changed = False
-    for match in re.finditer(r"[\[{]", text):
-        start = match.start()
-        if start < pos:
-            continue
-        try:
-            parsed, rel_end = decoder.raw_decode(text[start:])
-        except json.JSONDecodeError:
-            continue
-        end = start + rel_end
-        if not _looks_like_openai_tool_call_blob(parsed):
-            continue
-        pieces.append(text[pos:start])
-        pos = end
-        changed = True
-        # Common broken local-model suffix: a standalone ] before a role marker.
-        while pos < len(text) and text[pos] in " \t\r\n":
-            pos += 1
-        if pos < len(text) and text[pos] == "]":
-            pos += 1
-    if not changed:
-        return text
-    pieces.append(text[pos:])
-    return "".join(pieces)
+    # 1. Regex strip any leaked tool schema definition or raw tool call JSON blob
+    cleaned = re.sub(r'\{\s*"type"\s*:\s*"function"[\s\S]*', '', text)
+    cleaned = re.sub(r'\{\s*"function"\s*:\s*\{[\s\S]*', '', cleaned)
+    cleaned = re.sub(r'\{\s*"name"\s*:\s*"(?:ask_user|web_search|write_file|read_file|bash|python|manage_memory)"[\s\S]*', '', cleaned)
+    return cleaned.strip()
 
 def _parse_tool_call_block(raw: str) -> Optional[ToolBlock]:
     """Parse a [TOOL_CALL] block into a ToolBlock.

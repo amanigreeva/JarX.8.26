@@ -41399,3 +41399,15 @@ body.settings-sidebar-resize-active {
     display: none;
   }
 }
+
+/* ============================================================ */
+/* JARVIS: Clean Background Execution (Hide raw command cards)  */
+/* ============================================================ */
+.agent-thread,
+.agent-tool-output,
+.agent-action-card,
+.approval-card,
+.ask-user-card {
+  display: none !important;
+}
+

@@ -1133,14 +1133,38 @@ def setup_chat_routes(
                     session_id=session,
                 )
             _reconcile_selected_route_from_request(request, sess, session, form_data, owner=owner)
+            
+            # --- Smart Intent Router (Auto-Detect Model & Endpoint) ---
+            try:
+                from src.smart_router import route_prompt as _smart_route_prompt
+                _routed = _smart_route_prompt(message if isinstance(message, str) else "")
+                if _routed and isinstance(_routed, dict):
+                    sess.model = _routed.get("model") or getattr(sess, "model", "")
+                    from src.endpoint_resolver import build_chat_url as _build_chat_url
+                    sess.endpoint_url = _build_chat_url(_routed.get("endpoint_url") or getattr(sess, "endpoint_url", ""))
+                    if _routed.get("headers"):
+                        sess.headers = _routed.get("headers")
+                    
+                    # Commit to DB so that background tasks and helpers see the updated model
+                    _db = SessionLocal()
+                    try:
+                        _db_sess = _db.query(DBSession).filter(DBSession.id == session).first()
+                        if _db_sess:
+                            _db_sess.model = sess.model
+                            _db_sess.endpoint_url = sess.endpoint_url
+                            _db_sess.headers = sess.headers or {}
+                            _db_sess.updated_at = datetime.utcnow()
+                            _db.commit()
+                    finally:
+                        _db.close()
+                        
+                    logger.info("[SmartRouter] Auto-detected intent=%r -> model=%s endpoint=%s",
+                                _routed.get("intent"), sess.model, sess.endpoint_url)
+            except Exception as _router_err:
+                logger.warning("[SmartRouter] Routing bypass on error: %s", _router_err)
+
             if _clear_orphaned_session_endpoint(sess, owner=owner):
                 raise HTTPException(400, "Selected model endpoint was removed. Pick another model in Settings.")
-            # Issue #587: picker shows a model from the endpoint cache but
-            # s.model never made it onto the DB row (first-send race after
-            # endpoint setup, or a previous endpoint delete/recreate). Pull
-            # the first cached model off the matching endpoint so the
-            # upstream isn't called with model="" (which surfaces as a
-            # generic 401/503).
             _recover_empty_session_model(sess, session, owner=owner)
             if not getattr(sess, "model", "").strip():
                 raise HTTPException(
